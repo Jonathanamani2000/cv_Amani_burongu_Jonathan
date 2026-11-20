@@ -1,0 +1,16 @@
+ETAPES RAPIDES (voir aussi le message de Claude)
+
+1. Dézipper ce dossier, par exemple dans C:\src\cv_flutter_jonathan
+2. Ouvrir un terminal dans ce dossier (ou dans VS Code : Terminal > Nouveau terminal) puis lancer :
+     flutter create --project-name cv_flutter_jonathan --platforms=android,web .
+     flutter pub get
+3. Remplacer les photos temporaires dans assets/images/ par tes vraies photos,
+   en gardant EXACTEMENT les mêmes noms (format .png) :
+     jonathan.png, jacques.png, nathalie.png, leon.png, jemimah.png
+4. Modifier lib/data/cv_data.dart (téléphone, e-mail, LinkedIn, GitHub, professions)
+5. Lancer : flutter run -d chrome
+6. Faire les 4 captures et les mettre dans docs/screenshots/ :
+     01_connexion.png, 02_accueil.png, 03_famille.png, 04_contact.png
+7. Pousser sur GitHub (dépôt public cv_flutter_jonathan)
+
+Identifiants de test : jonathan / flutter2026

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../data/cv_data.dart';
+import '../services/api_service.dart';
 import '../widgets/fond_glass.dart';
 import '../widgets/glass_card.dart';
 import 'main_shell.dart';
 
-/// Page 1 : connexion.
+/// Page de connexion et de création d'un compte auprès de l'API.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -15,31 +16,48 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _idCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _mdpCtrl = TextEditingController();
+  final _api = ApiService();
   bool _masque = true;
+  bool _inscription = false;
+  bool _chargement = false;
 
   @override
   void dispose() {
-    _idCtrl.dispose();
+    _emailCtrl.dispose();
     _mdpCtrl.dispose();
     super.dispose();
   }
 
-  void _seConnecter() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _soumettre() async {
+    if (!_formKey.currentState!.validate() || _chargement) return;
+    setState(() => _chargement = true);
 
-    final ok = _idCtrl.text.trim().toLowerCase() == CvData.identifiant &&
-        _mdpCtrl.text == CvData.motDePasse;
-
-    if (ok) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainShell()),
-      );
-    } else {
+    try {
+      if (_inscription) {
+        await _api.register(_emailCtrl.text.trim(), _mdpCtrl.text);
+        if (!mounted) return;
+        setState(() => _inscription = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Compte créé. Vous pouvez maintenant vous connecter.'),
+          ),
+        );
+      } else {
+        await _api.login(_emailCtrl.text.trim(), _mdpCtrl.text);
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainShell()),
+        );
+      }
+    } on ApiException catch (error) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Identifiant ou mot de passe incorrect')),
+        SnackBar(content: Text(error.message)),
       );
+    } finally {
+      if (mounted) setState(() => _chargement = false);
     }
   }
 
@@ -66,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                             size: 72, color: theme.colorScheme.primary),
                         const SizedBox(height: 12),
                         Text(
-                          'Connexion',
+                          _inscription ? 'Créer un compte' : 'Connexion',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.headlineMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
@@ -79,18 +97,23 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 28),
                         TextFormField(
-                          controller: _idCtrl,
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
-                          decoration: _style('Identifiant', Icons.person),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Entrez votre identifiant'
-                              : null,
+                          decoration: _style('E-mail', Icons.email),
+                          validator: (value) {
+                            final email = value?.trim() ?? '';
+                            if (email.isEmpty || !email.contains('@')) {
+                              return 'Entrez une adresse e-mail valide';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _mdpCtrl,
                           obscureText: _masque,
-                          onFieldSubmitted: (_) => _seConnecter(),
+                          onFieldSubmitted: (_) => _soumettre(),
                           decoration:
                               _style('Mot de passe', Icons.lock).copyWith(
                             suffixIcon: IconButton(
@@ -102,25 +125,45 @@ class _LoginPageState extends State<LoginPage> {
                                   setState(() => _masque = !_masque),
                             ),
                           ),
-                          validator: (v) => (v == null || v.isEmpty)
-                              ? 'Entrez votre mot de passe'
-                              : null,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Entrez votre mot de passe';
+                            }
+                            if (_inscription && value.length < 6) {
+                              return 'Le mot de passe doit contenir 6 caractères minimum';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 24),
                         FilledButton.icon(
-                          onPressed: _seConnecter,
-                          icon: const Icon(Icons.login),
-                          label: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 14),
-                            child: Text('Se connecter'),
+                          onPressed: _chargement ? null : _soumettre,
+                          icon: _chargement
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                )
+                              : Icon(_inscription ? Icons.person_add : Icons.login),
+                          label: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Text(_inscription
+                                ? 'Créer le compte'
+                                : 'Se connecter'),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Test : ${CvData.identifiant} / ${CvData.motDePasse}',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: Colors.white70),
+                        TextButton(
+                          onPressed: _chargement
+                              ? null
+                              : () => setState(
+                                    () => _inscription = !_inscription,
+                                  ),
+                          child: Text(
+                            _inscription
+                                ? 'J’ai déjà un compte'
+                                : 'Créer un compte',
+                          ),
                         ),
                       ],
                     ),
@@ -134,11 +177,10 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// Style commun des deux champs : fond vitré et bords arrondis.
-  InputDecoration _style(String label, IconData icone) {
+  InputDecoration _style(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icone),
+      prefixIcon: Icon(icon),
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.06),
       border: OutlineInputBorder(

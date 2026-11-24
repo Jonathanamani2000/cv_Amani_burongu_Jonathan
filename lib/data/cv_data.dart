@@ -20,20 +20,6 @@ class Entree {
   });
 }
 
-class MembreFamille {
-  final String nom;
-  final String lien;
-  final String profession;
-  final String photo;
-
-  const MembreFamille({
-    required this.nom,
-    required this.lien,
-    required this.profession,
-    required this.photo,
-  });
-}
-
 class ContactInfo {
   final String label;
   final String valeur;
@@ -52,10 +38,6 @@ class ContactInfo {
 
 class CvData {
   CvData._();
-
-  // ---- Identifiants de connexion (page 1) ----
-  static const identifiant = 'jonathan';
-  static const motDePasse = 'flutter2026';
 
   // ---- Identité ----
   static const photoMoi = 'assets/images/jonathan.png';
@@ -141,35 +123,6 @@ class CvData {
     'Motion design',
     'Entrepreneuriat',
     'Création de contenus',
-  ];
-
-  // ---- Famille ----
-  // Profession : laisse '' pour ne pas l'afficher, ou écris-la (ex. 'Enseignant').
-  static const famille = <MembreFamille>[
-    MembreFamille(
-      nom: 'Jacques MUHINDO',
-      lien: 'Père',
-      profession: '',
-      photo: 'assets/images/jacques.png',
-    ),
-    MembreFamille(
-      nom: 'Nathalie WEMA',
-      lien: 'Mère',
-      profession: '',
-      photo: 'assets/images/nathalie.png',
-    ),
-    MembreFamille(
-      nom: 'Leon MUKISA',
-      lien: 'Frère',
-      profession: '',
-      photo: 'assets/images/leon.png',
-    ),
-    MembreFamille(
-      nom: 'Jemimah WEMA',
-      lien: 'Sœur',
-      profession: '',
-      photo: 'assets/images/jemimah.png',
-    ),
   ];
 
   // ---- Contacts (valeurs d'exemple : remplace-les par les tiens) ----
